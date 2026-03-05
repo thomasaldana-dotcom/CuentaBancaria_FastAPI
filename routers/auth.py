@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
-#Login
+#Login ....
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from jose import jwt, JWTError 
@@ -74,6 +74,7 @@ def registrar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_
         correo = usuario.correo,
         contrasenia_encriptada = hashed_password,
         numero_cuenta = numero_cuenta
+
     )
 
     db.add(nuevo_usuario)
@@ -82,6 +83,6 @@ def registrar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_
 
     return nuevo_usuario
     
-    
+#Este es un comentario de prueba para hacer un commit en git 
     
 
