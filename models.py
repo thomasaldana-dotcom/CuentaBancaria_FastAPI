@@ -12,7 +12,7 @@ class UsuarioDb(Base):
     nombre = Column(String)
     apellido = Column(String)
     correo = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    contrasenia_encriptada = Column(String)
     saldo = Column(Float, default = 0.0)
     numero_cuenta = Column(String, unique=True, index=True)
     transacciones = relationship("TransaccionDb", back_populates="dueño")
@@ -28,3 +28,27 @@ class TransaccionDb(Base):
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))
 
     dueño = relationship("UsuarioDb", back_populates="transacciones")
+
+class TransaccionDb(Base):
+    __tablename__ = "transacciones"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+    tipo = Column(String)
+    monto = Column(Float)
+    cuenta_destino = Column(String, nullable=True)
+    fecha = Column(DateTime, default=datetime.utcnow)
+
+class TransaccionCreate(BaseModel):
+    monto: float
+    cuenta_destino: str | None
+
+class TransaccionResponse(BaseModel):
+    id: int
+    tipo: str
+    monto: float
+    cuenta_destino: str | None
+    fecha: datetime
+
+    class Config:
+        from_attributes = True

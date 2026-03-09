@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
 #Login ....
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer # Se encarga de revisar automaticamente si el forntend mando el token en las cabeceras de las peticiones web 
 from datetime import datetime, timedelta
 from jose import jwt, JWTError 
 
@@ -16,22 +16,24 @@ router = APIRouter(
     tags=["Autenticacion"]
 )
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+#Router es para hacer todas las acciones de auth en un pasillo aparte y no mezclarlo con otras acciones
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #Licuadora de contraseñas
 
 #Login
 SECRET_KEY = "tu_clave_secreta_super_segura" 
 ALGORITHM = "HS256" #Crear la firma mezclada mediante hs256 estandar de la indsutria
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-def crear_token(data: dict):
-    codificar = data.copy()
-    expiracion = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    codificar.update({"exp": expiracion})
+def crear_token(data: dict): #Funcion para crear el token al usuario
+    codificar = data.copy() #Copia de los datos
+    expiracion = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES) #Tiempo de expiracion del token
+    codificar.update({"exp": expiracion}) #Actualiza la expiracion
 
-    token_jwt = jwt.encode(codificar, SECRET_KEY, algorithm=ALGORITHM)
+    token_jwt = jwt.encode(codificar, SECRET_KEY, algorithm=ALGORITHM) #Crea el token
     return token_jwt
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=schemas.Token) #Revisa los datos humanos para dejar entrar a la persona y darle un token
 def login(credenciales: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     usuario = db.query(models.UsuarioDb).filter(models.UsuarioDb.correo == credenciales.username).first()
 
@@ -74,7 +76,6 @@ def registrar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_
         correo = usuario.correo,
         contrasenia_encriptada = hashed_password,
         numero_cuenta = numero_cuenta
-
     )
 
     db.add(nuevo_usuario)
@@ -86,3 +87,34 @@ def registrar_usuario(usuario: schemas.UsuarioCreate, db: Session = Depends(get_
 #Este es un comentario de prueba para hacer un commit en git 
     
 
+
+
+#Escaner de tokens (Seguridad)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+def obtener_usuario_actual(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)): # Revisa el token y datos detras de la maquina es decir ya no importa la contraseña ni el correo
+    exepcion_credenciales = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Credenciales invalidas",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        id_usuario: str = payload.get("sub")
+        if id_usuario is None:
+            raise exepcion_credenciales
+    except JWTError:
+        raise exepcion_credenciales
+    
+    usuario = db.query(models.UsuarioDb).filter(models.UsuarioDb.id == id_usuario).first()
+    if usuario is None:
+        raise exepcion_credenciales
+    return usuario
+
+
+#Ruta protegida para ver el perfil y el saldo
+@router.get("/perfil", response_model=schemas.UsuarioResponse)
+def leer_perfil(usuario_actual: models.UsuarioDb = Depends(obtener_usuario_actual)):
+    return usuario_actual
