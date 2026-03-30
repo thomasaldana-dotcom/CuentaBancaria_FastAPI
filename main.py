@@ -5,7 +5,7 @@ import models
 from database import engine
 from routers import auth, transacciones
 
-models.Base.metadata.create_all(bind=engine)
+#models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Banco Thom",
@@ -22,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(transacciones.router)
 
 @app.get("/")
 def bienvenida():

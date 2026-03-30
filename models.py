@@ -4,6 +4,7 @@ from datetime import datetime
 
 from database import Base
 
+
 #Tabla usuarios
 class UsuarioDb(Base):
     __tablename__ = "usuarios"
@@ -29,26 +30,3 @@ class TransaccionDb(Base):
 
     dueño = relationship("UsuarioDb", back_populates="transacciones")
 
-class TransaccionDb(Base):
-    __tablename__ = "transacciones"
-
-    id = Column(Integer, primary_key=True, index=True)
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
-    tipo = Column(String)
-    monto = Column(Float)
-    cuenta_destino = Column(String, nullable=True)
-    fecha = Column(DateTime, default=datetime.utcnow)
-
-class TransaccionCreate(BaseModel):
-    monto: float
-    cuenta_destino: str | None
-
-class TransaccionResponse(BaseModel):
-    id: int
-    tipo: str
-    monto: float
-    cuenta_destino: str | None
-    fecha: datetime
-
-    class Config:
-        from_attributes = True

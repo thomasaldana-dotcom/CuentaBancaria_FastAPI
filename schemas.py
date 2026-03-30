@@ -6,14 +6,7 @@ class TransaccionBase(BaseModel): #PLantilla con los datos que se van a guardar 
     monto: float = Field(gt=0, description="Monto debe ser mayor a 0")
 
 class TransaccionCreate(TransaccionBase): #PLantilla con los datos que el usuario envia en un post osea en una transaccion
-    tipo: str
-    numero_cuenta_destino: Optional[str] = None
-
-    @model_validator(mode="after")
-    def validar_transaccion(self):
-        if self.tipo == "transferencia" and not self.numero_cuenta_destino:
-            raise ValueError("Debe especificar una cuenta de destino para transferencias")
-        return self
+    cuenta_destino: Optional[str] = None
 
 class TransaccionResponse(TransaccionBase): #Plantilla con los datos que envian al usuario la api
     id: int
@@ -43,8 +36,7 @@ class UsuarioResponse(UsuarioBase):
     class Config:
         from_attributes = True
 
-
-
+    
 #Token - Login
 
 class Token(BaseModel):

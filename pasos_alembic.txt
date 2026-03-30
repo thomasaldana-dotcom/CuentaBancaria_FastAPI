@@ -1,0 +1,10 @@
+Paosos para crear migraciones con Alembic:
+
+1. Activar el entorno virtual
+2. Instalar Alembic: pip install alembic
+3. Inicializar Alembic: alembic init alembic
+4. Ir a alembic.ini y cambiar la url de la base de datos propia
+5. Ir a la carpeta que se crea automaticamente y editar env.py
+6. Importar mi base de datos y modelos a ese archivo (env.py)
+7. TOmar la foto de mi base de datos: alembic revision --autogenerate -m "Initial migration"
+8. Aplicar la migración: alembic upgrade head
